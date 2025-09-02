@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subsea Arm Control System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 15px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .panel {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .panel h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .controls-panel {
+            grid-row: 2;
+        }
+
+        .visualization {
+            grid-row: 2;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .telemetry-panel {
+            grid-row: 2;
+        }
+
+        .joint-control {
+            margin-bottom: 20px;
+        }
+
+        .joint-control label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .joint-value {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .angle-display {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            min-width: 80px;
+            text-align: center;
+            font-family: 'Monaco', monospace;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        button.danger {
+            background: rgba(239, 68, 68, 0.5);
+        }
+
+        button.danger:hover {
+            background: rgba(239, 68, 68, 0.7);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .telemetry-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+        }
+
+        .telemetry-item:last-child {
+            border-bottom: none;
+        }
+
+        .telemetry-label {
+            opacity: 0.8;
+        }
+
+        .telemetry-value {
+            font-family: 'Monaco', monospace;
+            font-weight: 500;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-toggle button {
+            flex: 1;
+        }
+
+        .mode-toggle button.active {
+            background: rgba(34, 197, 94, 0.5);
+        }
+
+        .gripper-control {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .latency-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .latency-fill {
+            height: 100%;
+            background: #10b981;
+            width: 50%;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .latency-fill.warning {
+            background: #f59e0b;
+        }
+
+        .latency-fill.danger {
+            background: #ef4444;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+            height: 150px;
+            position: relative;
+        }
+
+        canvas.chart {
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦾 Subsea Arm Control System</h1>
+            <div class="status-indicators">
+                <div class="status-item">
+                    <span class="status-dot" id="control-status"></span>
+                    <span>Control</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot" id="subsea-status"></span>
+                    <span>Subsea</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot connected" id="relay-status"></span>
+                    <span>Relay</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel controls-panel">
+            <h2>Control Mode</h2>
+            <div class="mode-toggle">
+                <button id="mode-follow" class="active">Follow Mode</button>
+                <button id="mode-manual">Manual</button>
+            </div>
+
+            <h2>Joint Controls</h2>
+            <div class="joint-control">
+                <label>Joint 1 - Yaw</label>
+                <div class="joint-value">
+                    <span class="angle-display" id="j1-angle">0.0°</span>
+                    <span class="angle-display" id="j1-control">0.0°</span>
+                </div>
+                <input type="range" class="slider" id="j1-slider" min="-90" max="90" value="0" disabled>
+            </div>
+
+            <div class="joint-control">
+                <label>Joint 2 - Pitch</label>
+                <div class="joint-value">
+                    <span class="angle-display" id="j2-angle">0.0°</span>
+                    <span class="angle-display" id="j2-control">0.0°</span>
+                </div>
+                <input type="range" class="slider" id="j2-slider" min="-90" max="90" value="0" disabled>
+            </div>
+
+            <div class="joint-control">
+                <label>Joint 3 - Pitch</label>
+                <div class="joint-value">
+                    <span class="angle-display" id="j3-angle">0.0°</span>
+                    <span class="angle-display" id="j3-control">0.0°</span>
+                </div>
+                <input type="range" class="slider" id="j3-slider" min="-90" max="90" value="0" disabled>
+            </div>
+
+            <div class="joint-control">
+                <label>Joint 4 - Roll</label>
+                <div class="joint-value">
+                    <span class="angle-display" id="j4-angle">0.0°</span>
+                    <span class="angle-display" id="j4-control">0.0°</span>
+                </div>
+                <input type="range" class="slider" id="j4-slider" min="-180" max="180" value="0" disabled>
+            </div>
+
+            <div class="gripper-control">
+                <h2>Gripper Control</h2>
+                <button id="gripper-toggle" style="width: 100%">Open Gripper</button>
+            </div>
+
+            <div class="button-group">
+                <button id="btn-home">Home</button>
+                <button id="btn-calibrate">Calibrate</button>
+                <button id="btn-stop" class="danger">E-STOP</button>
+            </div>
+        </div>
+
+        <div class="visualization">
+            <div id="canvas-container"></div>
+        </div>
+
+        <div class="panel telemetry-panel">
+            <h2>System Telemetry</h2>
+            
+            <div class="telemetry-item">
+                <span class="telemetry-label">Mode:</span>
+                <span class="telemetry-value" id="system-mode">Follow</span>
+            </div>
+            
+            <div class="telemetry-item">
+                <span class="telemetry-label">Latency:</span>
+                <span class="telemetry-value" id="latency">0 ms</span>
+            </div>
+            <div class="latency-bar">
+                <div class="latency-fill" id="latency-bar"></div>
+            </div>
+
+            <div class="telemetry-item">
+                <span class="telemetry-label">Control Rate:</span>
+                <span class="telemetry-value" id="control-rate">0 Hz</span>
+            </div>
+
+            <div class="telemetry-item">
+                <span class="telemetry-label">Subsea Rate:</span>
+                <span class="telemetry-value" id="subsea-rate">0 Hz</span>
+            </div>
+
+            <div class="telemetry-item">
+                <span class="telemetry-label">Uptime:</span>
+                <span class="telemetry-value" id="uptime">00:00:00</span>
+            </div>
+
+            <div class="telemetry-item">
+                <span class="telemetry-label">CPU:</span>
+                <span class="telemetry-value" id="cpu">0%</span>
+            </div>
+
+            <div class="telemetry-item">
+                <span class="telemetry-label">Memory:</span>
+                <span class="telemetry-value" id="memory">0%</span>
+            </div>
+
+            <h2 style="margin-top: 20px">Joint Quality</h2>
+            <div class="telemetry-item">
+                <span class="telemetry-label">Joint 1:</span>
+                <span class="telemetry-value" id="q1">100%</span>
+            </div>
+            <div class="telemetry-item">
+                <span class="telemetry-label">Joint 2:</span>
+                <span class="telemetry-value" id="q2">100%</span>
+            </div>
+            <div class="telemetry-item">
+                <span class="telemetry-label">Joint 3:</span>
+                <span class="telemetry-value" id="q3">100%</span>
+            </div>
+            <div class="telemetry-item">
+                <span class="telemetry-label">Joint 4:</span>
+                <span class="telemetry-value" id="q4">100%</span>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="latency-chart" class="chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // WebSocket connection
+        let ws = null;
+        let reconnectTimeout = null;
+        let followMode = true;
+        let gripperOpen = false;
+        let emergencyStop = false;
+
+        // Telemetry data
+        let controlData = {};
+        let subseaData = {};
+        let systemStatus = {};
+        let latencyHistory = [];
+        let lastMessageTime = Date.now();
+
+        // Three.js scene
+        let scene, camera, renderer;
+        let armGroup, joint1, joint2, joint3, joint4, gripper;
+
+        // Initialize 3D visualization
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+            scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
+
+            camera = new THREE.PerspectiveCamera(
+                60,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(5, 3, 5);
+            camera.lookAt(0, 2, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.near = 0.1;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.camera.left = -10;
+            directionalLight.shadow.camera.right = 10;
+            directionalLight.shadow.camera.top = 10;
+            directionalLight.shadow.camera.bottom = -10;
+            scene.add(directionalLight);
+
+            const pointLight = new THREE.PointLight(0x764ba2, 0.5);
+            pointLight.position.set(-5, 5, -5);
+            scene.add(pointLight);
+
+            // Grid
+            const gridHelper = new THREE.GridHelper(10, 20, 0x444444, 0x222222);
+            scene.add(gridHelper);
+
+            // Build arm model
+            buildArmModel();
+
+            // Mouse controls
+            let mouseX = 0, mouseY = 0;
+            let isMouseDown = false;
+
+            container.addEventListener('mousedown', () => { isMouseDown = true; });
+            container.addEventListener('mouseup', () => { isMouseDown = false; });
+            container.addEventListener('mousemove', (e) => {
+                if (isMouseDown) {
+                    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+                    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+                }
+            });
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+
+                if (isMouseDown) {
+                    armGroup.rotation.y += mouseX * 0.02;
+                    camera.position.y = Math.max(1, camera.position.y + mouseY * 0.1);
+                    camera.lookAt(0, 2, 0);
+                }
+
+                // Update arm pose based on telemetry
+                updateArmPose();
+
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            // Handle resize
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        function buildArmModel() {
+            armGroup = new THREE.Group();
+            scene.add(armGroup);
+
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x667eea,
+                metalness: 0.5,
+                roughness: 0.3
+            });
+
+            const accentMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x764ba2,
+                metalness: 0.6,
+                roughness: 0.2
+            });
+
+            // Base
+            const baseGeometry = new THREE.CylinderGeometry(0.5, 0.6, 0.3, 32);
+            const base = new THREE.Mesh(baseGeometry, accentMaterial);
+            base.castShadow = true;
+            base.receiveShadow = true;
+            armGroup.add(base);
+
+            // Joint 1 (Yaw)
+            joint1 = new THREE.Group();
+            joint1.position.y = 0.15;
+            
+            const j1Geometry = new THREE.CylinderGeometry(0.3, 0.3, 0.4, 32);
+            const j1Mesh = new THREE.Mesh(j1Geometry, material);
+            j1Mesh.position.y = 0.2;
+            j1Mesh.castShadow = true;
+            joint1.add(j1Mesh);
+            
+            armGroup.add(joint1);
+
+            // Joint 2 (Pitch)
+            joint2 = new THREE.Group();
+            joint2.position.y = 0.4;
+            
+            const link1Geometry = new THREE.BoxGeometry(0.2, 1.2, 0.2);
+            const link1 = new THREE.Mesh(link1Geometry, material);
+            link1.position.y = 0.6;
+            link1.castShadow = true;
+            joint2.add(link1);
+            
+            const j2Geometry = new THREE.SphereGeometry(0.15, 16, 16);
+            const j2Mesh = new THREE.Mesh(j2Geometry, accentMaterial);
+            j2Mesh.castShadow = true;
+            joint2.add(j2Mesh);
+            
+            joint1.add(joint2);
+
+            // Joint 3 (Pitch)
+            joint3 = new THREE.Group();
+            joint3.position.y = 1.2;
+            
+            const link2Geometry = new THREE.BoxGeometry(0.15, 1.0, 0.15);
+            const link2 = new THREE.Mesh(link2Geometry, material);
+            link2.position.y = 0.5;
+            link2.castShadow = true;
+            joint3.add(link2);
+            
+            const j3Geometry = new THREE.SphereGeometry(0.12, 16, 16);
+            const j3Mesh = new THREE.Mesh(j3Geometry, accentMaterial);
+            j3Mesh.castShadow = true;
+            joint3.add(j3Mesh);
+            
+            joint2.add(joint3);
+
+            // Joint 4 (Roll) and gripper
+            joint4 = new THREE.Group();
+            joint4.position.y = 1.0;
+            
+            const j4Geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 16);
+            const j4Mesh = new THREE.Mesh(j4Geometry, accentMaterial);
+            j4Mesh.rotation.z = Math.PI / 2;
+            j4Mesh.castShadow = true;
+            joint4.add(j4Mesh);
+            
+            // Gripper
+            gripper = new THREE.Group();
+            gripper.position.y = 0.2;
+            
+            const gripperBase = new THREE.Mesh(
+                new THREE.BoxGeometry(0.15, 0.1, 0.15),
+                accentMaterial
+            );
+            gripperBase.castShadow = true;
+            gripper.add(gripperBase);
+            
+            // Gripper fingers
+            const fingerGeometry = new THREE.BoxGeometry(0.02, 0.15, 0.05);
+            const leftFinger = new THREE.Mesh(fingerGeometry, material);
+            leftFinger.position.set(-0.05, -0.075, 0);
+            leftFinger.castShadow = true;
+            gripper.add(leftFinger);
+            
+            const rightFinger = new THREE.Mesh(fingerGeometry, material);
+            rightFinger.position.set(0.05, -0.075, 0);
+            rightFinger.castShadow = true;
+            gripper.add(rightFinger);
+            
+            gripper.userData = { leftFinger, rightFinger };
+            
+            joint4.add(gripper);
+            joint3.add(joint4);
+        }
+
+        function updateArmPose() {
+            if (!joint1 || !joint2 || !joint3 || !joint4) return;
+
+            // Get angles from subsea data or control data
+            // Prefer subsea; fall back to control
+            const src = (subseaData && subseaData.joints) || (controlData && controlData.angles) || {};
+
+            // Helper: accept number OR {angle: number}
+            const val = (v) => (typeof v === "number" ? v : (v && typeof v.angle === "number" ? v.angle : undefined));
+            const lerp = (c, t, a) => c + (t - c) * a;
+            const alpha = 0.1;
+
+            const a1 = val(src.joint1_yaw);
+            if (angles.joint1_yaw !== undefined) {
+                const targetY = THREE.Math.degToRad(angles.joint1_yaw);
+                joint1.rotation.y = lerp(joint1.rotation.y, targetY, alpha);
+            }
+
+            const a2 = val(src.joint2_pitch);
+            if (angles.joint2_pitch !== undefined) {
+                const targetX = THREE.Math.degToRad(angles.joint2_pitch);
+                joint2.rotation.x = lerp(joint2.rotation.x, targetX, alpha);
+            }
+            const a3 = val(src.joint3_pitch);
+            if (angles.joint3_pitch !== undefined) {
+                const targetX = THREE.Math.degToRad(angles.joint3_pitch);
+                joint3.rotation.x = lerp(joint3.rotation.x, targetX, alpha);
+            }
+
+            const a4 = val(src.joint4_roll);
+            if (angles.joint4_roll !== undefined) {
+                const targetZ = THREE.Math.degToRad(angles.joint4_roll);
+                joint4.rotation.z = lerp(joint4.rotation.z, targetZ, alpha);
+            }
+
+            // Update gripper
+            if (gripper && gripper.userData) {
+                const fingerOffset = gripperOpen ? 0.08 : 0.05;
+                gripper.userData.leftFinger.position.x = lerp(
+                    gripper.userData.leftFinger.position.x, 
+                    -fingerOffset, 
+                    alpha
+                );
+                gripper.userData.rightFinger.position.x = lerp(
+                    gripper.userData.rightFinger.position.x, 
+                    fingerOffset, 
+                    alpha
+                );
+            }
+        }
+
+        // WebSocket connection
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.hostname || 'localhost';
+            const port = 8090;
+            
+            ws = new WebSocket(`${protocol}//${host}:${port}/web/ws`);
+
+            ws.onopen = () => {
+                console.log('Connected to relay');
+                document.getElementById('relay-status').classList.add('connected');
+                clearTimeout(reconnectTimeout);
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                handleMessage(message);
+                lastMessageTime = Date.now();
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from relay');
+                document.getElementById('relay-status').classList.remove('connected');
+                reconnectTimeout = setTimeout(connect, 3000);
+            };
+        }
+
+        function handleMessage(message) {
+            switch(message.type) {
+                case 'control_data':
+                    controlData = message.data;
+                    updateControlDisplay();
+                    break;
+                
+                case 'subsea_status':
+                    subseaData = message.data.data || message.data;
+                    updateSubseaDisplay();
+                    break;
+                
+                case 'system_status':
+                case 'heartbeat':
+                    systemStatus = message.data;
+                    updateSystemStatus();
+                    break;
+            }
+        }
+
+        function updateControlDisplay() {
+            if (controlData.angles) {
+                document.getElementById('j1-control').textContent = 
+                    (controlData.angles.joint1_yaw || 0).toFixed(1) + '°';
+                document.getElementById('j2-control').textContent = 
+                    (controlData.angles.joint2_pitch || 0).toFixed(1) + '°';
+                document.getElementById('j3-control').textContent = 
+                    (controlData.angles.joint3_pitch || 0).toFixed(1) + '°';
+                document.getElementById('j4-control').textContent = 
+                    (controlData.angles.joint4_roll || 0).toFixed(1) + '°';
+            }
+
+            if (controlData.qualities) {
+                document.getElementById('q1').textContent = 
+                    ((controlData.qualities.joint1_yaw || 0) * 100).toFixed(0) + '%';
+                document.getElementById('q2').textContent = 
+                    ((controlData.qualities.joint2_pitch || 0) * 100).toFixed(0) + '%';
+                document.getElementById('q3').textContent = 
+                    ((controlData.qualities.joint3_pitch || 0) * 100).toFixed(0) + '%';
+                document.getElementById('q4').textContent = 
+                    ((controlData.qualities.joint4_roll || 0) * 100).toFixed(0) + '%';
+            }
+        }
+
+        function updateSubseaDisplay() {
+            if (subseaData.joints) {
+                const j1 = subseaData.joints.joint1_yaw;
+                const j2 = subseaData.joints.joint2_pitch;
+                const j3 = subseaData.joints.joint3_pitch;
+                const j4 = subseaData.joints.joint4_roll;
+
+                if (j1) document.getElementById('j1-angle').textContent = j1.angle.toFixed(1) + '°';
+                if (j2) document.getElementById('j2-angle').textContent = j2.angle.toFixed(1) + '°';
+                if (j3) document.getElementById('j3-angle').textContent = j3.angle.toFixed(1) + '°';
+                if (j4) document.getElementById('j4-angle').textContent = j4.angle.toFixed(1) + '°';
+            }
+
+            if (subseaData.gripper_open !== undefined) {
+                gripperOpen = subseaData.gripper_open;
+                document.getElementById('gripper-toggle').textContent = 
+                    gripperOpen ? 'Close Gripper' : 'Open Gripper';
+            }
+
+            if (subseaData.emergency_stop) {
+                emergencyStop = true;
+                document.getElementById('btn-stop').textContent = 'Reset E-STOP';
+                document.getElementById('btn-stop').style.background = 'rgba(239, 68, 68, 0.8)';
+            }
+        }
+
+        function updateSystemStatus() {
+            if (!systemStatus) return;
+
+            // Connection status
+            if (systemStatus.control) {
+                const controlConnected = systemStatus.control.connected;
+                document.getElementById('control-status').className = 
+                    'status-dot' + (controlConnected ? ' connected' : '');
+                
+                const rate = systemStatus.control.message_count / 
+                    (Date.now() - lastMessageTime) * 1000;
+                document.getElementById('control-rate').textContent = rate.toFixed(1) + ' Hz';
+            }
+
+            if (systemStatus.subsea) {
+                const subseaConnected = systemStatus.subsea.connected;
+                document.getElementById('subsea-status').className = 
+                    'status-dot' + (subseaConnected ? ' connected' : '');
+                
+                const rate = systemStatus.subsea.message_count / 
+                    (Date.now() - lastMessageTime) * 1000;
+                document.getElementById('subsea-rate').textContent = rate.toFixed(1) + ' Hz';
+                
+                // Latency
+                const latency = systemStatus.subsea.latency || 0;
+                document.getElementById('latency').textContent = latency.toFixed(0) + ' ms';
+                
+                // Update latency bar
+                const latencyBar = document.getElementById('latency-bar');
+                const latencyPercent = Math.min(100, (latency / 100) * 100);
+                latencyBar.style.width = latencyPercent + '%';
+                
+                if (latency > 75) {
+                    latencyBar.className = 'latency-fill danger';
+                } else if (latency > 50) {
+                    latencyBar.className = 'latency-fill warning';
+                } else {
+                    latencyBar.className = 'latency-fill';
+                }
+
+                latencyHistory.push(latency);
+                if (latencyHistory.length > 50) latencyHistory.shift();
+            }
+
+            if (systemStatus.relay) {
+                const uptime = systemStatus.relay.uptime || 0;
+                const hours = Math.floor(uptime / 3600);
+                const minutes = Math.floor((uptime % 3600) / 60);
+                const seconds = Math.floor(uptime % 60);
+                document.getElementById('uptime').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            if (systemStatus.system) {
+                document.getElementById('cpu').textContent = 
+                    (systemStatus.system.cpu_percent || 0).toFixed(1) + '%';
+                document.getElementById('memory').textContent = 
+                    (systemStatus.system.memory_percent || 0).toFixed(1) + '%';
+            }
+        }
+
+        function sendCommand(command) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'command',
+                    data: command
+                }));
+            }
+        }
+
+        // Control handlers
+        document.getElementById('mode-follow').addEventListener('click', () => {
+            followMode = true;
+            document.getElementById('mode-follow').classList.add('active');
+            document.getElementById('mode-manual').classList.remove('active');
+            document.getElementById('system-mode').textContent = 'Follow';
+            
+            // Disable manual sliders
+            document.querySelectorAll('.slider').forEach(s => s.disabled = true);
+        });
+
+        document.getElementById('mode-manual').addEventListener('click', () => {
+            followMode = false;
+            document.getElementById('mode-follow').classList.remove('active');
+            document.getElementById('mode-manual').classList.add('active');
+            document.getElementById('system-mode').textContent = 'Manual';
+            
+            // Enable manual sliders
+            document.querySelectorAll('.slider').forEach(s => s.disabled = false);
+        });
+
+        // Manual control sliders
+        const joints = ['j1', 'j2', 'j3', 'j4'];
+        const jointNames = ['joint1_yaw', 'joint2_pitch', 'joint3_pitch', 'joint4_roll'];
+
+        joints.forEach((joint, index) => {
+            const slider = document.getElementById(`${joint}-slider`);
+            slider.addEventListener('input', () => {
+                if (!followMode) {
+                    const angle = parseFloat(slider.value);
+                    const angles = {};
+                    angles[jointNames[index]] = angle;
+                    
+                    sendCommand({
+                        type: 'joint_angles',
+                        data: angles
+                    });
+                }
+            });
+        });
+
+        // Button handlers
+        document.getElementById('btn-home').addEventListener('click', () => {
+            sendCommand({ type: 'reset' });
+        });
+
+        document.getElementById('btn-calibrate').addEventListener('click', () => {
+            if (confirm('Start calibration? Move arm to home position first.')) {
+                sendCommand({ type: 'calibrate' });
+            }
+        });
+
+        document.getElementById('btn-stop').addEventListener('click', () => {
+            if (emergencyStop) {
+                sendCommand({ type: 'reset' });
+                emergencyStop = false;
+                document.getElementById('btn-stop').textContent = 'E-STOP';
+                document.getElementById('btn-stop').style.background = '';
+            } else {
+                sendCommand({ type: 'emergency_stop' });
+            }
+        });
+
+        document.getElementById('gripper-toggle').addEventListener('click', () => {
+            gripperOpen = !gripperOpen;
+            sendCommand({
+                type: 'gripper',
+                open: gripperOpen
+            });
+        });
+
+        // Initialize
+        connect();
+        init3D();
+
+        // Periodic status request
+        setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'get_status' }));
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
