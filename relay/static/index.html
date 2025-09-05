@@ -276,7 +276,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🦾 Subsea Arm Control System</h1>
+            <h1>TRIDENT Control System</h1>
             <div class="status-indicators">
                 <div class="status-item">
                     <span class="status-dot" id="control-status"></span>
@@ -637,32 +637,27 @@
             if (!joint1 || !joint2 || !joint3 || !joint4) return;
 
             // Get angles from subsea data or control data
-            // Prefer subsea; fall back to control
-            const src = (subseaData && subseaData.joints) || (controlData && controlData.angles) || {};
+            const angles = subseaData.joints || controlData.angles || {};
 
-            // Helper: accept number OR {angle: number}
-            const val = (v) => (typeof v === "number" ? v : (v && typeof v.angle === "number" ? v.angle : undefined));
-            const lerp = (c, t, a) => c + (t - c) * a;
+            // Apply joint angles with smooth interpolation
+            const lerp = (current, target, alpha) => current + (target - current) * alpha;
             const alpha = 0.1;
 
-            const a1 = val(src.joint1_yaw);
             if (angles.joint1_yaw !== undefined) {
                 const targetY = THREE.Math.degToRad(angles.joint1_yaw);
                 joint1.rotation.y = lerp(joint1.rotation.y, targetY, alpha);
             }
 
-            const a2 = val(src.joint2_pitch);
             if (angles.joint2_pitch !== undefined) {
                 const targetX = THREE.Math.degToRad(angles.joint2_pitch);
                 joint2.rotation.x = lerp(joint2.rotation.x, targetX, alpha);
             }
-            const a3 = val(src.joint3_pitch);
+
             if (angles.joint3_pitch !== undefined) {
                 const targetX = THREE.Math.degToRad(angles.joint3_pitch);
                 joint3.rotation.x = lerp(joint3.rotation.x, targetX, alpha);
             }
 
-            const a4 = val(src.joint4_roll);
             if (angles.joint4_roll !== undefined) {
                 const targetZ = THREE.Math.degToRad(angles.joint4_roll);
                 joint4.rotation.z = lerp(joint4.rotation.z, targetZ, alpha);
