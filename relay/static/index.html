@@ -636,33 +636,41 @@
         function updateArmPose() {
             if (!joint1 || !joint2 || !joint3 || !joint4) return;
 
-            // Get angles from subsea data or control data
-            const angles = subseaData.joints || controlData.angles || {};
+            // Get angles from subsea data (state objects) or control data (raw angles)
+            const rawAngles = subseaData.joints || controlData.angles || {};
+            const getAngle = (joint) => {
+                const value = rawAngles[joint];
+                return typeof value === 'object' ? value.angle : value;
+            };
 
             // Apply joint angles with smooth interpolation
             const lerp = (current, target, alpha) => current + (target - current) * alpha;
             const alpha = 0.1;
 
-            if (angles.joint1_yaw !== undefined) {
-                const targetY = THREE.Math.degToRad(angles.joint1_yaw);
+
+            const j1 = getAngle('joint1_yaw');
+            if (j1 !== undefined) {
+                const targetY = THREE.Math.degToRad(j1);
                 joint1.rotation.y = lerp(joint1.rotation.y, targetY, alpha);
             }
 
-            if (angles.joint2_pitch !== undefined) {
-                const targetX = THREE.Math.degToRad(angles.joint2_pitch);
+            const j2 = getAngle('joint2_pitch');
+            if (j2 !== undefined) {
+                const targetX = THREE.Math.degToRad(j2);
                 joint2.rotation.x = lerp(joint2.rotation.x, targetX, alpha);
             }
 
-            if (angles.joint3_pitch !== undefined) {
-                const targetX = THREE.Math.degToRad(angles.joint3_pitch);
+            const j3 = getAngle('joint3_pitch');
+            if (j3 !== undefined) {
+                const targetX = THREE.Math.degToRad(j3);
                 joint3.rotation.x = lerp(joint3.rotation.x, targetX, alpha);
             }
 
-            if (angles.joint4_roll !== undefined) {
-                const targetZ = THREE.Math.degToRad(angles.joint4_roll);
+            const j4 = getAngle('joint4_roll');
+            if (j4 !== undefined) {
+                const targetZ = THREE.Math.degToRad(j4);
                 joint4.rotation.z = lerp(joint4.rotation.z, targetZ, alpha);
             }
-
             // Update gripper
             if (gripper && gripper.userData) {
                 const fingerOffset = gripperOpen ? 0.08 : 0.05;
