@@ -1,5 +1,5 @@
-# TRIDENT BlueOS Extension - Minimal Dependencies
-# Optimized for low resource usage
+# TRIDENT BlueOS Extension - Enhanced Dependencies
+# Optimized for low resource usage with monitoring capabilities
 
 # Core async web framework
 aiohttp==3.9.1
@@ -11,5 +11,6 @@ numpy==1.26.2
 # GPIO/PWM control for servos (Raspberry Pi only)
 pigpio==1.78
 
-# Health check support
+# System monitoring and health checks
+psutil==5.9.6
 requests==2.31.0

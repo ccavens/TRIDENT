@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRIDENT Subsea Controller</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>🦾 TRIDENT Subsea Controller</h1>
+            <div class="header-controls">
+                <div class="connection-status" id="connection-status">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-text">Disconnected</span>
+                </div>
+                <button class="mode-toggle" id="mode-toggle">👨‍💻 Developer Mode</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Setup Wizard (shown on first run) -->
+        <div class="wizard-overlay" id="wizard-overlay">
+            <div class="wizard-modal">
+                <div class="wizard-header">
+                    <h2>🚀 TRIDENT Setup Wizard</h2>
+                    <p>Let's get your robotic arm configured</p>
+                </div>
+                <div class="wizard-content" id="wizard-content">
+                    <!-- Wizard steps will be populated by JS -->
+                </div>
+                <div class="wizard-footer">
+                    <button class="btn btn-secondary" id="wizard-prev">← Previous</button>
+                    <button class="btn btn-primary" id="wizard-next">Next →</button>
+                    <button class="btn btn-success" id="wizard-finish" style="display:none;">✓ Finish</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Mode View -->
+        <div class="view user-view" id="user-view">
+            <!-- Status Cards -->
+            <div class="status-grid">
+                <div class="status-card">
+                    <h3>System Status</h3>
+                    <div class="status-item">
+                        <span>Hardware Mode:</span>
+                        <span id="hardware-mode" class="badge">Unknown</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Uptime:</span>
+                        <span id="uptime">--</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Calibrated:</span>
+                        <span id="calibrated" class="badge">Unknown</span>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <h3>Connection Health</h3>
+                    <div class="status-item">
+                        <span>Connected Clients:</span>
+                        <span id="client-count">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Last Command:</span>
+                        <span id="last-command">Never</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Connection Quality:</span>
+                        <div class="quality-bar">
+                            <div class="quality-fill" id="quality-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <h3>System Resources</h3>
+                    <div class="status-item">
+                        <span>CPU Usage:</span>
+                        <span id="cpu-usage">--</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Memory:</span>
+                        <span id="memory-usage">--</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Health:</span>
+                        <span id="health-status" class="badge">Unknown</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Joint Status -->
+            <div class="joints-panel">
+                <h3>Joint Status</h3>
+                <div class="joints-grid" id="joints-grid">
+                    <!-- Joints will be populated by JS -->
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h3>Quick Actions</h3>
+                <div class="button-group">
+                    <button class="btn btn-warning btn-large" id="emergency-stop">
+                        🛑 Emergency Stop
+                    </button>
+                    <button class="btn btn-secondary btn-large" id="reset-arm">
+                        🔄 Reset to Center
+                    </button>
+                    <button class="btn btn-primary" id="open-calibration">
+                        🎯 Calibrate
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Developer Mode View -->
+        <div class="view developer-view" id="developer-view" style="display: none;">
+            <div class="developer-grid">
+                <!-- Logs Panel -->
+                <div class="panel logs-panel">
+                    <div class="panel-header">
+                        <h3>System Logs</h3>
+                        <div class="panel-controls">
+                            <select id="log-level">
+                                <option value="all">All Levels</option>
+                                <option value="error">Errors Only</option>
+                                <option value="warning">Warnings+</option>
+                                <option value="info">Info+</option>
+                            </select>
+                            <button class="btn-icon" id="clear-logs" title="Clear logs">🗑️</button>
+                            <button class="btn-icon" id="download-logs" title="Download logs">💾</button>
+                        </div>
+                    </div>
+                    <div class="logs-container" id="logs-container">
+                        <!-- Logs will be populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Configuration Panel -->
+                <div class="panel config-panel">
+                    <h3>Configuration</h3>
+                    <div class="config-section">
+                        <h4>Servo Pins</h4>
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label>Joint 1 (Yaw):</label>
+                                <input type="number" id="pin-joint1" value="12" min="0" max="27">
+                            </div>
+                            <div class="config-item">
+                                <label>Joint 2 (Pitch):</label>
+                                <input type="number" id="pin-joint2" value="13" min="0" max="27">
+                            </div>
+                            <div class="config-item">
+                                <label>Joint 3 (Pitch):</label>
+                                <input type="number" id="pin-joint3" value="14" min="0" max="27">
+                            </div>
+                            <div class="config-item">
+                                <label>Joint 4 (Roll):</label>
+                                <input type="number" id="pin-joint4" value="15" min="0" max="27">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-section">
+                        <h4>Safety Limits</h4>
+                        <div class="config-item">
+                            <label>Max Speed (°/s):</label>
+                            <input type="number" id="max-speed" value="180" min="1" max="360">
+                        </div>
+                        <div class="config-item">
+                            <label>Update Rate (Hz):</label>
+                            <input type="number" id="update-rate" value="50" min="10" max="100">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="save-config">💾 Save Configuration</button>
+                </div>
+
+                <!-- Diagnostics Panel -->
+                <div class="panel diagnostics-panel">
+                    <h3>Diagnostics</h3>
+                    <div class="diagnostics-grid">
+                        <div class="diagnostic-item">
+                            <h4>Servo Test</h4>
+                            <select id="test-joint">
+                                <option value="joint1_yaw">Joint 1 (Yaw)</option>
+                                <option value="joint2_pitch">Joint 2 (Pitch)</option>
+                                <option value="joint3_pitch">Joint 3 (Pitch)</option>
+                                <option value="joint4_roll">Joint 4 (Roll)</option>
+                            </select>
+                            <input type="range" id="test-angle" min="-90" max="90" value="0">
+                            <span id="test-angle-value">0°</span>
+                            <button class="btn btn-secondary" id="test-servo">Test Servo</button>
+                        </div>
+                        <div class="diagnostic-item">
+                            <h4>Connection Test</h4>
+                            <button class="btn btn-secondary" id="ping-test">Ping Test</button>
+                            <div id="ping-result">Ready</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrics Panel -->
+                <div class="panel metrics-panel">
+                    <h3>Performance Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <div class="metric-label">Commands Processed</div>
+                            <div class="metric-value" id="cmd-count">0</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Error Rate</div>
+                            <div class="metric-value" id="error-rate">0%</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Avg Latency</div>
+                            <div class="metric-value" id="avg-latency">--ms</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Messages/sec</div>
+                            <div class="metric-value" id="msg-rate">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calibration Modal -->
+    <div class="modal-overlay" id="calibration-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>🎯 Servo Calibration</h2>
+                <button class="close-btn" id="close-calibration">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="calibration-step" id="calibration-content">
+                    <p>Select a joint to calibrate:</p>
+                    <div class="joint-select">
+                        <button class="btn" data-joint="joint1_yaw">Joint 1 (Yaw)</button>
+                        <button class="btn" data-joint="joint2_pitch">Joint 2 (Pitch)</button>
+                        <button class="btn" data-joint="joint3_pitch">Joint 3 (Pitch)</button>
+                        <button class="btn" data-joint="joint4_roll">Joint 4 (Roll)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

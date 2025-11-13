@@ -8,13 +8,26 @@ This BlueOS extension provides minimal servo control for the TRIDENT 5-DOF under
 
 ## Features
 
-- **Ultra-lightweight**: Minimal CPU and memory footprint
+### Core Functionality
+- **Ultra-lightweight**: Minimal CPU (<15%) and memory footprint (~50MB)
 - **Servo Control**: PWM control for 4 servo joints via pigpio
-- **WebSocket API**: Real-time command interface for Mac relay
-- **REST API**: HTTP endpoints for status and health checks
+- **WebSocket API**: Real-time command interface with auto-reconnection
+- **REST API**: Comprehensive HTTP endpoints for all operations
 - **Safety Features**: Emergency stop, rate limiting, angle clamping
 - **Graceful Degradation**: Simulation mode when hardware unavailable
 - **BlueOS Compatible**: Follows BlueOS extension standards
+
+### Enhanced Features (NEW)
+- **🎯 Web-Based UI**: Built-in web interface with user and developer modes
+- **🧙 Setup Wizard**: Interactive first-time setup and configuration
+- **📐 Calibration Interface**: Web-based servo calibration wizard
+- **🔌 Smart Reconnection**: Exponential backoff with jitter for WebSocket reliability
+- **📊 Connection Health Monitoring**: Real-time connection quality metrics
+- **⚡ Enhanced Error Handling**: Comprehensive error catching and reporting
+- **📝 Structured Logging**: Viewable, filterable, and downloadable logs
+- **🔧 Developer Mode**: Advanced diagnostics, testing, and configuration
+- **💾 Persistent Configuration**: Settings survive container restarts
+- **🏥 Health Monitoring**: Automatic system health checks
 
 ## Architecture
 
@@ -206,15 +219,46 @@ Extension information.
 #### POST `/command`
 Send commands via HTTP POST (alternative to WebSocket).
 
+## Web Interface
+
+The extension includes a comprehensive web interface accessible at `http://<blueos-ip>:<port>/`
+
+### User Mode (Default)
+- **Status Dashboard**: Real-time system status, connection health, and resource usage
+- **Joint Monitoring**: Live joint positions, PWM values, and timestamps
+- **Quick Actions**: Emergency stop, reset, and calibration buttons
+- **Connection Quality**: Visual indicators for connection health
+
+### Developer Mode
+- **System Logs**: Viewable, filterable, and downloadable logs
+- **Configuration Editor**: Modify GPIO pins, safety limits, and update rates
+- **Diagnostics**: Servo testing, connection testing, and ping tools
+- **Performance Metrics**: Command count, error rate, latency, and message rate
+
+### Setup Wizard
+On first run, an interactive wizard guides you through:
+1. Hardware verification
+2. Safety configuration
+3. System testing
+4. Final setup
+
+### Calibration Interface
+Web-based calibration for each joint:
+1. Select joint to calibrate
+2. Move servo to min/center/max positions
+3. Record PWM values
+4. Save calibration (persists across restarts)
+
 ## Performance
 
 Optimized for minimal resource usage on Raspberry Pi:
 - **CPU Usage**: <5% idle, <15% under load
-- **Memory**: ~50MB RAM
+- **Memory**: ~50MB RAM (including web UI)
 - **Update Rate**: 50Hz servo control loop
 - **Latency**: <20ms command processing
+- **WebSocket**: Auto-reconnection with exponential backoff
 
-All heavy processing (logging, telemetry, 3D rendering) happens on the Mac relay.
+All heavy processing (logging aggregation, 3D rendering) happens on the Mac relay.
 
 ## Safety Features
 
