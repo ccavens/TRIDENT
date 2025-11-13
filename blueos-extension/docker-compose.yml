@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  trident-subsea:
+    build: .
+    container_name: trident-subsea
+    image: trident-subsea:latest
+
+    # Required for GPIO access on Raspberry Pi
+    privileged: true
+
+    # Use host network for easier connectivity with BlueOS
+    network_mode: host
+
+    # Device access for hardware control
+    devices:
+      - /dev:/dev
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Environment variables
+    environment:
+      - PYTHONUNBUFFERED=1
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:9091/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

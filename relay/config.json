@@ -1,0 +1,27 @@
+{
+  "network": {
+    "relay_port": 9090,
+    "web_port": 8090,
+    "subsea_url": "ws://blueos.local:9091/ws",
+    "control_timeout": 5.0,
+    "subsea_timeout": 10.0,
+    "reconnect_delay": 5.0,
+    "heartbeat_interval": 1.0
+  },
+  "data": {
+    "buffer_size": 1000,
+    "log_enabled": true,
+    "log_dir": "logs",
+    "record_telemetry": true
+  },
+  "safety": {
+    "max_latency": 100,
+    "auto_reconnect": true,
+    "rate_limit": 100
+  },
+  "simulation": {
+    "enabled": false,
+    "add_noise": false,
+    "latency_ms": 20
+  }
+}
