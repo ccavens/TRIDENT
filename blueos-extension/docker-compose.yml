@@ -9,12 +9,13 @@ services:
     # Required for GPIO access on Raspberry Pi
     privileged: true
 
-    # Use host network for easier connectivity with BlueOS
-    network_mode: host
+    # Port mapping (dynamic on BlueOS, fixed for local testing)
+    ports:
+      - "9091:9091"
 
-    # Device access for hardware control
-    devices:
-      - /dev:/dev
+    # Volume for configuration persistence
+    volumes:
+      - trident-config:/root/.config
 
     # Restart policy
     restart: unless-stopped
@@ -30,3 +31,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  trident-config:

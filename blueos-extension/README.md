@@ -52,6 +52,8 @@ This BlueOS extension provides minimal servo control for the TRIDENT 5-DOF under
 
 ### Option 2: Manual Docker Installation
 
+**Note**: When installing via Extension Manager, BlueOS assigns ports dynamically. Check the Extensions page for the actual port.
+
 ```bash
 # SSH into BlueOS Raspberry Pi
 ssh pi@blueos.local
@@ -61,8 +63,8 @@ docker pull <dockerhub-username>/trident-subsea:latest
 docker run -d \
   --name trident-subsea \
   --privileged \
-  --network host \
-  --device /dev:/dev \
+  -p 9091:9091 \
+  -v trident-config:/root/.config \
   --restart unless-stopped \
   <dockerhub-username>/trident-subsea:latest
 ```
@@ -83,7 +85,18 @@ docker-compose up -d
 
 ## Configuration
 
-The extension uses port **9091** for WebSocket and HTTP communication.
+### Port Configuration
+
+**Default Port**: 9091 (for manual deployment)
+
+**BlueOS Extension Manager**: When installed via Extension Manager, BlueOS assigns a dynamic port. To find the actual port:
+1. Open BlueOS web interface (`http://blueos.local`)
+2. Navigate to **Extensions**
+3. Find TRIDENT extension
+4. Note the assigned port (e.g., `http://blueos.local:PORT`)
+5. Update your relay `config.json` with: `"subsea_url": "ws://blueos.local:PORT/ws"`
+
+**Manual Deployment**: Port 9091 is fixed when using docker-compose or manual docker run.
 
 ### Hardware Setup
 
@@ -97,8 +110,9 @@ Servos should be HSR-M9382TH or compatible (500-2500μs PWM range).
 
 ### Network Configuration
 
-Update your Mac relay configuration to point to the BlueOS container:
+Update your Mac relay configuration to point to the BlueOS container.
 
+**For Manual Deployment (docker-compose)**:
 ```json
 {
   "network": {
@@ -107,11 +121,21 @@ Update your Mac relay configuration to point to the BlueOS container:
 }
 ```
 
-Or use the IP address of your BlueOS Raspberry Pi:
+**For BlueOS Extension Manager Installation**:
+First, find the assigned port in the BlueOS Extensions page, then:
 ```json
 {
   "network": {
-    "subsea_url": "ws://192.168.2.2:9091/ws"
+    "subsea_url": "ws://blueos.local:ACTUAL_PORT/ws"
+  }
+}
+```
+
+**Using IP Address**:
+```json
+{
+  "network": {
+    "subsea_url": "ws://192.168.2.2:ACTUAL_PORT/ws"
   }
 }
 ```

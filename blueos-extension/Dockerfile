@@ -36,10 +36,16 @@ LABEL permissions='\
     },\
     "HostConfig": {\
         "Privileged": true,\
-        "NetworkMode": "host",\
         "Binds": [\
-            "/dev:/dev:rw"\
-        ]\
+            "/root/.config:/root/.config"\
+        ],\
+        "PortBindings": {\
+            "9091/tcp": [\
+                {\
+                    "HostPort": ""\
+                }\
+            ]\
+        }\
     }\
 }'
 LABEL authors='[\
@@ -53,7 +59,7 @@ LABEL company='{\
     "name": "TRIDENT",\
     "email": "trident@example.com"\
 }'
-LABEL readme='https://raw.githubusercontent.com/{tag}/README.md'
+LABEL readme='https://raw.githubusercontent.com/ccavens/TRIDENT/{tag}/blueos-extension/README.md'
 LABEL links='{\
     "website": "https://github.com/ccavens/TRIDENT",\
     "support": "https://github.com/ccavens/TRIDENT/issues"\
